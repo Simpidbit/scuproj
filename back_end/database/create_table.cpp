@@ -21,7 +21,7 @@ int main(){
     // 建 ACCOUNT 表
     sql = "CREATE TABLE IF NOT EXISTS ACCOUNT("         \
             "ID INT PRIMARY KEY NOT NULL,"              \
-            "ACCOUNT_ID         CHAR(10)    NOT NULL,"  \
+            "ACCOUNT_ID         CHAR(8)     NOT NULL,"  \
             "ACCOUNT_PASSWD     CHAR(64)    NOT NULL,"  \
             "ACCOUNT_NAME       CHAR(255)   NOT NULL,"  \
             "ACCOUNT_LEVEL      INT         NOT NULL);";
@@ -39,7 +39,7 @@ int main(){
     // 建 COURSE 表
     sql = "CREATE TABLE IF NOT EXISTS COURSE("          \
             "ID INT PRIMARY KEY NOT NULL,"              \
-            "COURSE_ID        CHAR(8)       NOT NULL,"  \
+            "COURSE_ID        CHAR(10)      NOT NULL,"  \
             "COURSE_NAME      CHAR(255)     NOT NULL,"  \
             "COURSE_CAPACITY  INT           NOT NULL,"  \
             "COURSE_SPARE     INT           NOT NULL,"  \
@@ -59,8 +59,8 @@ int main(){
      // 建 COURSE_SELECT 表
     sql = "CREATE TABLE IF NOT EXISTS COURSE_SELECT(" \
             "ID INT PRIMARY KEY NOT NULL,"            \
-            "ACCOUNT_ID       INT         NOT NULL,"  \
-            "COURSE_ID_LIST   CHAR(1023)  NOT NULL);";
+            "ACCOUNT_ID       CHAR(8)     NOT NULL,"  \
+            "COURSE_ID_LIST   CHAR(1000)  NOT NULL);";
 
     // 执行 SQL 语句，没有 callback
     rc = sqlite3_exec(db, sql, NULL, NULL, &zErrMsg);
