@@ -2,6 +2,7 @@ from flask import Flask
 from flask import request
 
 import json
+import socket
 
 SERVER_PORT = 22334
 KERNEL_PORT = 24354
@@ -10,7 +11,7 @@ app = Flask(__name__)
 
 def connect_to_kernel():
     s = socket.socket()
-    s.connect(("127.0.0.1", SERVER_PORT))
+    s.connect(("127.0.0.1", KERNEL_PORT))
     return s
 
 def recvall(sock):
@@ -39,6 +40,7 @@ def loginRequest(data) -> str:
     ks.send(msg)
     result = recvall(ks)
     ks.close()
+    return 'yes'
 
     print("result:", result)
 
@@ -51,7 +53,7 @@ def loginRequest(data) -> str:
         result_dict['token'] = result[2:].decode('utf-8')
     print("result_dict:", result_dict)
     print("###################")
-    return json.dump(result_dict)
+    return json.dumps(result_dict)
 
 # 修改密码请求 -> 修改密码结果
 def modifyPasswordRequest(data) -> str:
@@ -76,7 +78,7 @@ def modifyPasswordRequest(data) -> str:
     }
     print("result_dict:", result_dict)
     print("###################")
-    return json.dump(result_dict)
+    return json.dumps(result_dict)
 
 # 增加课程请求 -> 增加课程结果
 def addCourseRequest(data) -> str:
@@ -107,7 +109,7 @@ def addCourseRequest(data) -> str:
     }
     print("result_dict:", result_dict)
     print("###################")
-    return json.dump(result_dict)
+    return json.dumps(result_dict)
 
 # 选择课程请求 -> 选择课程结果
 def chooseCourseRequest(data) -> str:
@@ -132,7 +134,7 @@ def chooseCourseRequest(data) -> str:
     }
     print("result_dict:", result_dict)
     print("###################")
-    return json.dump(result_dict)
+    return json.dumps(result_dict)
 
 # 查询单个课程信息 -> 查询单个课程结果
 def queryCourseRequest(data) -> str:
@@ -161,7 +163,7 @@ def queryCourseRequest(data) -> str:
     }
     print("result_dict:", result_dict)
     print("###################")
-    return json.dump(result_dict)
+    return json.dumps(result_dict)
 
 # 退课请求 -> 退课结果
 def removeCourseRequest(data) -> str:
@@ -186,7 +188,7 @@ def removeCourseRequest(data) -> str:
     }
     print("result_dict:", result_dict)
     print("###################")
-    return json.dump(result_dict)
+    return json.dumps(result_dict)
 
 
 handlerMap = [ \
@@ -194,14 +196,14 @@ handlerMap = [ \
     modifyPasswordRequest,      # 修改密码请求(2) -> 修改密码结果(3)
     addCourseRequest,           # 增加课程请求(4) -> 增加课程结果(5)
     chooseCourseRequest,        # 选择课程请求(6) -> 选择课程结果(7)
-    queryCourseRequest,         # 查询单个课程信息(8) -> 查询单个课程信息的结果(9)
+    queryCourseRequest,         # 查询单个课程信息请求(8) -> 查询单个课程信息结果(9)
     removeCourseRequest         # 退课请求(10) -> 退课结果(11)
 ]
 
 @app.route('/request', methods = ['POST'])
 def requestHandler():
     data = json.loads(request.get_data())
-    return handlerMap[data['type'] / 2](data)
+    return handlerMap[int(data['type'] / 2)](data)
 
 """
 @app.route("/")
