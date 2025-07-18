@@ -56,7 +56,6 @@ int main(){
 
      // 建 COURSE_SELECT 表
     sql = "CREATE TABLE IF NOT EXISTS COURSE_SELECT(" \
-            "ID INT PRIMARY KEY NOT NULL,"            \
             "ACCOUNT_ID       CHAR(8)     NOT NULL,"  \
             "COURSE_ID_LIST   CHAR(1000)  NOT NULL);";
     // 执行 SQL 语句，没有 callback
