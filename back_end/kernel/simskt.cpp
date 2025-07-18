@@ -240,7 +240,7 @@ simpid::SocketAbstract::brecv(unsigned char *buf, size_t length)
     // buf长度 >= length + 1
     int tmp = 0;
     memset(buf, 0, length);
-    tmp = ::recv(this->skt, buf, length, 0);
+    tmp = ::recv(this->skt, (char *)(void *)buf, length, 0);
     if (tmp >= 0) buf[tmp] = 0;
 #ifdef _WIN32
     if (tmp == SOCKET_ERROR) {
