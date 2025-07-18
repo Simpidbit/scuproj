@@ -223,6 +223,14 @@ choose_course_request_handle(const std::unordered_map<std::string, void *> &data
 
       std::vector<std::string> student_selection = db.searchOne(TableName::COURSE_SELECT, "ACCOUNT_ID", account_id);
 
+      if (student_selection.empty()) {
+        // 不存在这个学生选课记录，说明以前从未选课
+        if (db.addOne(TableName::COURSE, {account_id, course_id}))
+          *res = 0;
+        else *res = 1;
+        return result;
+      }
+
       std::string course_id_list = student_selection[1];
       unsigned char course_id_list_len = static_cast<unsigned char>(course_id_list.size() / 10);
 
@@ -260,6 +268,7 @@ query_course_request_handle(const std::unordered_map<std::string, void *> &data)
     std::vector<std::string> course = db.searchOne(TableName::COURSE, "COURSE_ID", course_id);
     unsigned char *res = new unsigned char;
     if (!course.empty()) {
+      *res = 0;
       result["course_id"] = new std::string(course[0]);
       result["course_name_len"] = new unsigned char(std::stoi(course[1]));
       result["course_name"] = new std::string(course[2]);
@@ -267,8 +276,9 @@ query_course_request_handle(const std::unordered_map<std::string, void *> &data)
       result["course_spare"] = new unsigned int(std::stoi(course[4]));
       result["course_week"] = new std::vector<unsigned char>(course[5].begin(), course[5].end());
       result["course_day"] = new std::vector<unsigned char>(course[6].begin(), course[6].end());
-    }
-    result["result"] = res;//按照原有表格，查询失败没有返回值
+    } else *res = 1;
+
+    result["result"] = res;
     return result;
 }
 
@@ -276,45 +286,63 @@ std::unordered_map<std::string, void *>
 remove_course_request_handle(const std::unordered_map<std::string, void *> &data)
 {
     Database db;
-    std::string account_id = *(std::string *)data.at("account_id");
-    std::string token = *(std::string *)data.at("token");
-    std::string course_id = *(std::string *)data.at("course_id");
+    std::string account_id  = *(std::string *)data.at("account_id");
+    std::string token       = *(std::string *)data.at("token");
+    std::string course_id   = *(std::string *)data.at("course_id");
+
     delete (std::string *)data.at("account_id");
     delete (std::string *)data.at("token");
     delete (std::string *)data.at("course_id");
 
-    
-
-
-
     std::unordered_map<std::string, void *> result;
     unsigned char *res = new unsigned char;
+    result["result"] = res;
 
-    if(check_token_correct(account_id, token) == 1) {
+    int token_stat = check_token_correct(account_id, token);
+    if(token_stat == 0 || token_stat == 1) {
         *res = 100; // token 错误
-        result["result"] = res;
         return result;
     }
     else if(check_token_correct(account_id, token) == 2) {
         *res = 101; // token 已过期
-        result["result"] = res;
         return result;
     }
     
     // 删除选课
-    if (db.deleteOneById(TableName::COURSE_SELECT, account_id)) {
-        // spare+1
-        std::vector<std::string> course = db.searchOne(TableName::COURSE, "COURSE_ID", course_id);
-        if (!course.empty()) {
-            int spare = std::stoi(course[3]) + 1;
-            db.updateOneById(TableName::COURSE, "COURSE_SPARE", std::to_string(spare), course_id);
-        }
-        *res = 0;
-        ::tokens[account_id].second = get_timestamp();
-    } else {
-        *res = 1; // 删除选课失败
+    std::vector<std::string> student_selection = db.searchOne(TableName::COURSE_SELECT, "ACCOUNT_ID", account_id);
+
+    if (student_selection.empty()) {
+      *res = 1;   // 没有这条记录
+      return result;
     }
-    result["result"] = res;
+
+    std::string course_id_list = student_selection[1];
+    unsigned char course_id_list_len = static_cast<unsigned char>(course_id_list.size() / 10);
+
+    for (unsigned char i = 0; i != course_id_list_len; i++) {
+      if (course_id == course_id_list.substr(i * 10, 10)) {
+        // 就是删除这个课
+        std::string backlist;
+
+        if (i == course_id_list_len - 1)
+          backlist = "";    // 删除的是最后一个课
+        else
+          backlist = course_id_list.substr((i + 1) * 10, ((unsigned int)(course_id_list_len - i - 1)) * 10);
+
+        std::string new_course_id_list = course_id_list.substr(0, i * 10) + backlist;
+
+        if (db.updateOneById(TableName::COURSE_SELECT, "COURSE_ID_LIST", new_course_id_list, account_id)) {
+          *res = 0;
+          return result;
+        } else {
+          *res = 1;
+          return result;
+        }
+      }
+    }
+
+    // 能到这里说明学生没选这个课
+    *res = 1;
     return result;
 }
 
