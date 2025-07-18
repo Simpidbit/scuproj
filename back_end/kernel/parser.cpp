@@ -313,4 +313,41 @@ parse(const std::vector<unsigned char> &raw)
   return data;
 }
 
+
+std::string
+vec_to_dbstr(std::vector<unsigned char> &vec)
+{
+  std::string dbstr = "";
+
+  unsigned int tmp;
+
+  for (auto iter = vec.begin(); iter != vec.end(); iter++) {
+    tmp = (unsigned int) (*iter);
+    dbstr += std::to_string(tmp);
+    if (iter == vec.end() - 1) break;
+    dbstr += ',';
+  }
+
+  return dbstr;
+}
+
+std::vector<unsigned char> *
+dbstr_to_vec(std::string &str)
+{
+  std::cout << "dbstr_to_vec: " << str << "#" << std::endl;
+  std::vector<unsigned char> *vecp = new std::vector<unsigned char>;
+  std::string tmp;
+
+  for (auto iter = str.begin(); iter != str.end(); iter++) {
+    tmp += *iter;
+    if (*iter == ',') {
+      vecp->push_back(std::stoi(tmp));
+      tmp = "";
+    }
+  }
+  vecp->push_back(std::stoi(tmp));
+
+  return vecp;
+}
+
 } // namespace parser

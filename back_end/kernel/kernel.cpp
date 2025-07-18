@@ -3,6 +3,7 @@
 #include "parser.h"
 #include "handler.h"
 #include "response.h"
+#include "pit.h"
 
 #include <iostream>
 
@@ -47,6 +48,8 @@ print_data(const std::unordered_map<std::string, void *> &data)
       std::cout << *(std::string *)kv.second;
     } else if (kv.first == "account_level") {
       std::cout << (int)*((unsigned char*)kv.second);
+    } else if (kv.first == "course_id") {
+      std::cout << *(std::string *)kv.second;
     }
     std::cout << std::endl;
   }
@@ -55,13 +58,18 @@ print_data(const std::unordered_map<std::string, void *> &data)
 void
 handle(SP::Client *cli) 
 {
+  pit(201);
   std::vector<unsigned char> raw = cli->brecvall();
   std::unordered_map<std::string, void *> data = parser::parse(raw);
   std::unordered_map<std::string, void *> result;
   std::vector<unsigned char> resmsg;
   // data 由各逻辑完成判断后释放!
 
+  pit(202);
+
   print_data(data);
+
+  pit(203);
 
   switch(*static_cast<unsigned char *>(data["type"])) {
     case 0:   // 登录请求
@@ -93,7 +101,11 @@ handle(SP::Client *cli)
       resmsg = response::query_student_selection_result(result);
   }
 
+  pit(204);
+
   cli->send((const char *)(void *)&resmsg[0], resmsg.size());
+
+  pit(205);
 
   return;
 }
@@ -103,13 +115,18 @@ int main()
   SP::Server serv;
   SP::Client *cli;
 
+  pit(0);
   serv.bind("0.0.0.0", LISTEN_PORT);
   serv.listen(32);
 
   for (;;) {
+    pit(1);
     cli = serv.accept();
+    pit(2);
     handle(cli);
+    pit(3);
     delete cli;
+    pit(4);
   }
 
   return 0;
