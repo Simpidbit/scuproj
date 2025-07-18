@@ -513,7 +513,7 @@ remove_course_request_handle(const std::unordered_map<std::string, void *> &data
 
     if (get_account_level(db, account_id) != 0) {
       *res = 1;
-      return;
+      return result;
     }
 
 
