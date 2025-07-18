@@ -1,50 +1,139 @@
 #include "database.h"
 #include "handler.h"
+#include "picosha2.h"
+
 #include <cstring>
+
+#include <vector>
+#include <string>
+#include <chrono>
+#include <utility>
+
+static std::unordered_map<std::string, std::pair<std::string, long long> > tokens;
+
+static long long
+get_timestamp()
+{
+  auto now = std::chrono::system_clock::now();
+  auto duration = now.time_since_epoch();
+  long long millis = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
+  return millis;
+}
+
+// 判断此account_id是否有tokens存在
+static bool
+check_token(std::string account_id)
+{
+  return ::tokens.count(account_id) ? true : false;
+}
+
+// 刷新token有效时间
+static void
+update_token(std::string account_id)
+{
+  if (!check_token(account_id)) return;
+  ::tokens[account_id].second = get_timestamp();
+}
+
+// 检查token是否已经超过有效时间
+// 必须已有此token，否则返回true
+// 已超过有效时间返回true
+static bool
+check_token_timeout(std::string account_id)
+{
+  if (!check_token(account_id)) return true;
+
+  long long last_update = ::tokens[account_id].second;
+  long long now = get_timestamp();
+
+  if (now - last_update > 15 * 60 * 1000) return true;
+  else return false;
+}
+
+// 检查token是否存在且有效
+// 有效返回 true
+static bool
+check_token_correct(std::string account_id, std::string token)
+{
+  if (!check_token(account_id)) return false;
+  return (::tokens[account_id].first == token
+       && !check_token_timeout(account_id));
+}
+
+
+// 删除token
+static void
+remove_token(std::string account_id)
+{
+  if (!check_token(account_id)) return;
+  ::tokens.erase(account_id);
+}
 
 namespace handler {
 
 std::unordered_map<std::string, void *>
 login_request_handle(const std::unordered_map<std::string, void *> &data)
 {
-    Database db;
-    auto account_id = *(std::string *)data.at("account_id");
-    auto account_passwd = *(std::string *)data.at("account_passwd");
-    std::unordered_map<std::string, void *> result;
-    auto user = db.searchOne(TableName::ACCOUNT, "ACCOUNT_ID", account_id);
-    unsigned char *res = new unsigned char;
-    if (!user.empty() && user.size() >= 3 && user[1] == account_passwd) {
-        *res = 1; // 登录成功
-        result["account_level"] = new unsigned char((unsigned char)std::stoi(user[3]));
-        result["account_name"] = new std::string(user[2]);
-    } else {
-        *res = 0; // 登录失败
-    }
-    result["result"] = res;
-    return result;
+  Database db;
+  std::unordered_map<std::string, void *> result;
+
+  std::string   account_id      = *(std::string *)data["account_id"];
+  std::string   account_passwd  = *(std::string *)data["account_passwd"];
+  unsigned char account_level   = *(unsigned char *)data["account_level"];
+
+  delete (unsigned char *)data["type"];
+  delete (std::string *)data["account_id"];
+  delete (std::string *)data["account_passwd"];
+  delete (unsigned char *)data["account_level"];
+
+  std::vector<std::string> user = db.searchOne(TableName::ACCOUNT, "ACCOUNT_ID", account_id);
+  unsigned char *res = new unsigned char;
+
+  if (user.empty())
+    *res = 1;   // 账号不存在
+  else if (user[1] != account_passwd)
+    *res = 2;   // 账号存在但密码错误
+  else if (user[3] != std::to_string(account_level))
+    *res = 3;   // 账号、密码都正确但权限错误
+  else {  // 登录成功
+    *res = 0;
+    long long timestamp = get_timestamp();
+    std::string timestamp_str = std::to_string(timestamp);
+    std::string token = picosha2::sha256(timestamp_str + account_id + account_passwd);
+    result["token"] = new std::string(token);
+
+    ::tokens[account_id] = std::make_pair<std::string, long long>(token, timestamp);
+  }
+
+  result["result"] = res;
+  return result;
 }
 
 std::unordered_map<std::string, void *>
 modify_password_request_handle(const std::unordered_map<std::string, void *> &data)
 {
-    Database db;
-    auto account_id = *(std::string *)data.at("account_id");
-    auto old_passwd = *(std::string *)data.at("account_passwd");
-    auto new_passwd = *(std::string *)data.at("new_passwd");
-    std::unordered_map<std::string, void *> result;
-    auto user = db.searchOne(TableName::ACCOUNT, "ACCOUNT_ID", account_id);
-    unsigned char *res = new unsigned char;
-    if (!user.empty() && user.size() >= 2 && user[1] == old_passwd) {
-        if (db.updateOneById(TableName::ACCOUNT, "ACCOUNT_PASSWD", new_passwd, account_id)) {
-            *res = 1; // 修改成功
-        } else {
-            *res = 0; // 数据库更新失败
-        }
-    } else {
-        *res = 0; // 原密码错误
-    }
-    result["result"] = res;
-    return result;
+  Database db;
+  std::unordered_map<std::string, void *> result;
+
+  std::string account_id  = *(std::string *)data["account_id"];
+  std::string new_passwd  = *(std::string *)data["account_passwd"];
+  std::string token       = *(std::string *)data["token"];
+
+  delete (std::string *)data["account_id"];
+  delete (std::string *)data["account_passwd"];
+  delete (std::string *)data["token"];
+
+  std::vector<std::string> user = db.searchOne(TableName::ACCOUNT, "ACCOUNT_ID", account_id);
+  unsigned char *res = new unsigned char;
+  if (!user.empty() && check_token_correct(account_id, token)) {
+    if (db.updateOneById(TableName::ACCOUNT, "ACCOUNT_PASSWD", new_passwd, account_id))
+      *res = 1; // 修改成功
+    else
+      *res = 0; // 数据库更新失败
+  } else *res = 0; // token 错误
+
+  result["result"] = res;
+  return result;
 }
 
 std::unordered_map<std::string, void *>
