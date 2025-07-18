@@ -51,13 +51,13 @@ check_token_timeout(std::string account_id)
 }
 
 // 检查token是否存在且有效
-// 有效返回 true
+// 有效返回 3
 static long long
 check_token_correct(std::string account_id, std::string token)
 {
   if (!check_token(account_id)) return 0;// token 不存在
   else if (::tokens[account_id].first != token) return 1;// token 不匹配
-  else if(!check_token_timeout(account_id)) return 2;// token 已过期
+  else if(check_token_timeout(account_id)) return 2;// token 已过期
   else return 3; // token 有效  
 }
 
