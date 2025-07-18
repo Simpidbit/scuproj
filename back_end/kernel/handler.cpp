@@ -2,6 +2,8 @@
 #include "handler.h"
 #include <cstring>
 
+namespace handler {
+
 std::unordered_map<std::string, void *>
 login_request_handle(const std::unordered_map<std::string, void *> &data)
 {
@@ -144,3 +146,5 @@ remove_course_request_handle(const std::unordered_map<std::string, void *> &data
     result["result"] = res;
     return result;
 }
+
+} // namespace handler
