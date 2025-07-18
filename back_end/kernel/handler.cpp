@@ -77,14 +77,14 @@ login_request_handle(const std::unordered_map<std::string, void *> &data)
   Database db;
   std::unordered_map<std::string, void *> result;
 
-  std::string   account_id      = *(std::string *)data["account_id"];
-  std::string   account_passwd  = *(std::string *)data["account_passwd"];
-  unsigned char account_level   = *(unsigned char *)data["account_level"];
+  std::string   account_id      = *(std::string *)data.at("account_id");
+  std::string   account_passwd  = *(std::string *)data.at("account_passwd");
+  unsigned char account_level   = *(unsigned char *)data.at("account_level");
 
-  delete (unsigned char *)data["type"];
-  delete (std::string *)data["account_id"];
-  delete (std::string *)data["account_passwd"];
-  delete (unsigned char *)data["account_level"];
+  delete (unsigned char *)data.at("type");
+  delete (std::string *)data.at("account_id");
+  delete (std::string *)data.at("account_passwd");
+  delete (unsigned char *)data.at("account_level");
 
   std::vector<std::string> user = db.searchOne(TableName::ACCOUNT, "ACCOUNT_ID", account_id);
   unsigned char *res = new unsigned char;
@@ -102,7 +102,7 @@ login_request_handle(const std::unordered_map<std::string, void *> &data)
     std::string token = picosha2::sha256(timestamp_str + account_id + account_passwd);
     result["token"] = new std::string(token);
 
-    ::tokens[account_id] = std::make_pair<std::string, long long>(token, timestamp);
+    ::tokens[account_id] = std::make_pair(token, timestamp);
   }
 
   result["result"] = res;
@@ -115,19 +115,21 @@ modify_password_request_handle(const std::unordered_map<std::string, void *> &da
   Database db;
   std::unordered_map<std::string, void *> result;
 
-  std::string account_id  = *(std::string *)data["account_id"];
-  std::string new_passwd  = *(std::string *)data["account_passwd"];
-  std::string token       = *(std::string *)data["token"];
+  std::string account_id  = *(std::string *)data.at("account_id");
+  std::string new_passwd  = *(std::string *)data.at("account_passwd");
+  std::string token       = *(std::string *)data.at("token");
 
-  delete (std::string *)data["account_id"];
-  delete (std::string *)data["account_passwd"];
-  delete (std::string *)data["token"];
+  delete (std::string *)data.at("account_id");
+  delete (std::string *)data.at("account_passwd");
+  delete (std::string *)data.at("token");
 
   std::vector<std::string> user = db.searchOne(TableName::ACCOUNT, "ACCOUNT_ID", account_id);
   unsigned char *res = new unsigned char;
   if (!user.empty() && check_token_correct(account_id, token)) {
-    if (db.updateOneById(TableName::ACCOUNT, "ACCOUNT_PASSWD", new_passwd, account_id))
+    if (db.updateOneById(TableName::ACCOUNT, "ACCOUNT_PASSWD", new_passwd, account_id)) {
       *res = 1; // 修改成功
+      ::tokens[account_id].second = get_timestamp();
+    }
     else
       *res = 0; // 数据库更新失败
   } else *res = 0; // token 错误
