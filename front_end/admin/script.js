@@ -303,12 +303,30 @@ function saveStudent() {
 }
 
 // 显示修改密码弹窗
-function showPasswordModal(id) {
+async function showPasswordModal(id) {
     const student = students.find(student => student.account_id === id);
     if (student) {
         const newPassword = prompt('请输入新密码', '');
         if (newPassword!== null) {
             student.password = newPassword;
+            const token = getToken();
+            const accountId = getID();
+            
+            const encryptedPassword = await sha256Encrypt(newPassword);
+
+            const pwd_request = {
+                type: 2,
+                account_id: accountId,
+                account_passwd: encryptedPassword,
+                token: token,
+            };
+
+            const result = await makeRequest(pwd_request);
+
+            if (result.result === 0) {
+                alert('密码修改成功');
+            }
+
             renderStudents();
         }
     }
@@ -356,7 +374,7 @@ function showCourseModal(id) {
 }
 
 // 保存课程信息
-function saveCourse() {
+async function saveCourse() {
     const modalCourseId = document.getElementById('modalCourseId');
     const courseId = modalCourseId.value;
     const courseName = document.getElementById('modalCourseName').value;
@@ -406,7 +424,11 @@ function saveCourse() {
     const courseDay = [courseDayInput.length / 3, ...courseDayInput];
 
     const courseData = {
+        type: 4,
+        accountId: getID(),
+        token: getToken(),
         course_id: courseId,
+        course_name_len: courseName.length,
         course_name: courseName,
         course_capacity: courseCapacity,
         course_spare: courseSpare,
@@ -414,12 +436,12 @@ function saveCourse() {
         course_day: courseDay
     };
 
-    if (courses.some(course => course.course_id === courseId)) {
-        const index = courses.findIndex(course => course.course_id === courseId);
-        courses[index] = courseData;
-    } else {
-        courses.push(courseData);
+    const result = await makeRequest(courseData);
+
+    if (result.result === 0) {
+        alert(`添加成功`);
     }
+
     renderCourses();
     closeCourseModal();
 }
@@ -517,4 +539,108 @@ function toggleSidebar() {
     } else {
         console.error('Sidebar element with id "sidebar" not found.');
     }
+}
+
+function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+        }
+
+function getToken(){
+    const token = getCookie('token');
+    if (token) {
+        console.log('获取到的 token:', token);
+        return token;
+    } else {
+        console.log('未获取到 token');
+        alert("登录信息已过期，请重新登录");
+        window.location.href = '../index.html';
+    }
+} 
+
+function getID(){
+    const token = getCookie('account_id');
+    if (token) {
+        console.log('获取到的 account_id:', token);
+        return token;
+    } else {
+        console.log('未获取到 id');
+        alert("登录信息已过期，请重新登录");
+        window.location.href = '../index.html';
+    }
+} 
+
+// 将字符串转换为 SHA-256 哈希值（十六进制）
+async function sha256Encrypt(str) {
+  // 将字符串转换为 Uint8Array
+  const encoder = new TextEncoder();
+  const data = encoder.encode(str);
+  
+  // 计算 SHA-256 哈希
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  
+  // 将 ArrayBuffer 转换为十六进制字符串
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray.map(byte => byte.toString(16).padStart(2, '0')).join('');
+  
+  return hashHex;
+}
+
+/**
+ * 通用的请求函数
+ * @param {Object} data - 请求数据
+ * @returns {Promise<Object>} - 包含响应结果的 Promise 对象
+ */
+async function makeRequest(data) {
+    const requestJson = JSON.stringify(data, null, 2);
+    console.log(requestJson);
+
+    const response = await fetch('http://localhost:3000/request', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: requestJson,
+        mode: 'cors'
+    });
+
+    // 解析后端返回的 JSON 响应
+    const result = await response.json();
+
+    // 处理响应结果
+    if (response.ok) {
+        const statusCode = result.result;
+        let errmsg = '';
+        switch (statusCode) {
+            case 0:
+                break;
+            case 1:
+                errmsg = "课程号已存在的课程冲突";
+                break;
+            case 2:
+                errmsg = "其他错误";
+                break;
+            case 100:
+                errmsg = "token 错误";
+                window.location.href = '../index.html';
+                break;
+            case 101:
+                errmsg = "token 已超时失效";
+                window.location.href = '../index.html';
+                break;
+            default:
+                errmsg = "没有权限";
+                break;
+        }
+        if (errmsg) {
+            alert(errmsg);
+        }
+    } else {
+        // 请求失败
+        const errorMessage = result.message || '未知错误';
+        alert(`请求失败: ${errorMessage}`);
+    }
+
+    return result;
 }

@@ -143,7 +143,7 @@ body {
 }
 
 .select-course-btn:not(.disabled-btn):hover {
-    background-color: #439a46; /* 稍深的浅蓝 */
+    background-color: #439a46 !important;
 }
 
 /* 表格样式 */

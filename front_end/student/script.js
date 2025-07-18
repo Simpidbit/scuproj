@@ -136,8 +136,56 @@ async function displayResults(results) {
     ` : '<div class="result-item">未找到相关课程</div>';
 }
 
+/**
+ * 通用的请求函数
+ * @param {Object} data - 请求数据
+ * @returns {Promise<Object>} - 包含响应结果的 Promise 对象
+ */
+async function makeRequest(data) {
+    const requestJson = JSON.stringify(data, null, 2);
+    console.log(requestJson);
+
+    const response = await fetch('http://localhost:3000/request', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: requestJson,
+        mode: 'cors'
+    });
+
+    // 解析后端返回的 JSON 响应
+    const result = await response.json();
+
+    // 处理响应结果
+    if (response.ok) {
+        const statusCode = result.result;
+        switch (statusCode) {
+            case 0:
+                break;
+            case 1:
+                alert(`其他错误`);
+                break;
+            case 100:
+                alert(`token 错误`);
+                window.location.href = '../index.html';
+                break;
+            case 101:
+                alert(`token 已超时失效`);
+                window.location.href = '../index.html';
+                break;
+        }
+    } else {
+        // 请求失败
+        const errorMessage = result.message || '未知错误';
+        alert(`请求失败: ${errorMessage}`);
+    }
+
+    return result;
+}
+
 // 退课函数
-function dropCourse(courseId) {
+async function dropCourse(courseId) {
     // 使用 confirm 函数弹出确认对话框
     const isConfirmed = confirm('确定要退选该课程吗？');
     if (isConfirmed) {
@@ -145,10 +193,22 @@ function dropCourse(courseId) {
         if (index !== -1) {
             // 从已选课程列表中移除该课程
             enrolledCourses.splice(index, 1);
+
+            const selectinfo = {
+                type: 10,
+                accountId: getID(),
+                token: getToken(),
+                course_id: courseId
+            };
+
+            const result = await makeRequest(selectinfo);
+
+            if (result.result === 0) {
+                alert(`退课成功`);
+            }
+
             // 重新渲染已选课程列表
             displayEnrolledCourses();
-            // 可添加调用后端 API 的逻辑，实际退课操作
-            alert('退课成功');
         }
     }
 }
@@ -172,31 +232,40 @@ function showPage(pageId) {
     }
 }
 
-function selectCourse(courseId) {
+async function selectCourse(courseId) {
     console.log('选课成功');
+    const selectinfo = {
+        type: 6,
+        accountId: getID(),
+        token: getToken(),
+        course_id: courseId
+    };
+
+    const result = await makeRequest(selectinfo);
+
+    if (result.result === 0) {
+        alert(`添加成功`);
+    }
     // 这里可以添加实际的选课逻辑，比如调用后端 API
 }
 
 async function searchCourses() {
     const courseId = document.getElementById('courseIdInput').value.trim();
-    let data = [];
-    try {
-        // 本地JSON文件路径（注意：浏览器环境下需通过服务器访问，不能直接用file://协议）
-        const response = await fetch('./course_info.json');
-        if (!response.ok) {
-            throw new Error(`请求失败: ${response.status}`);
-        }
-        data = await response.json();
-        console.log("本地JSON数据:", data);
-    } catch (error) {
-        console.error("读取失败:", error.message);
+
+    const courseData = {
+        type: 8,
+        accountId: getID(),
+        token: getToken(),
+        course_id: courseId
+    };
+
+    const result = await makeRequest(courseData);
+
+    if (result.result === 0) {
+        alert(`添加成功`);
     }
 
-    const results = data.filter(course => 
-        course.course_id.includes(courseId)
-    );
-
-    displayResults(results);
+    displayResults([result]);
 }
 
 // 动态添加 CSS 样式
@@ -362,3 +431,33 @@ document.addEventListener('DOMContentLoaded', async function() {
         });
     }
 });
+
+function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+        }
+
+function getToken(){
+    const token = getCookie('token');
+    if (token) {
+        console.log('获取到的 token:', token);
+        return token;
+    } else {
+        console.log('未获取到 token');
+        alert("登录信息已过期，请重新登录");
+        window.location.href = '../index.html';
+    }
+} 
+
+function getID(){
+    const token = getCookie('account_id');
+    if (token) {
+        console.log('获取到的 account_id:', token);
+        return token;
+    } else {
+        console.log('未获取到 id');
+        alert("登录信息已过期，请重新登录");
+        window.location.href = '../index.html';
+    }
+} 

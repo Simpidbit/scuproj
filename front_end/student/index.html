@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>学生选课管理系统</title>
     <!-- 引入 Font Awesome 图标库 -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="../CDN/font-awesome/css/all.min.css">
     <!-- 引入 FullCalendar 样式 -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.css">
+    <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.css"> -->
     <!-- 引入外部 CSS 文件 -->
     <link rel="stylesheet" href="style.css">
      <!-- 设置 favicon，假设图标文件名为 favicon.ico -->
@@ -111,10 +111,28 @@
     </div>
 
     <!-- 引入 FullCalendar 脚本 -->
-    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.18/index.global.min.js"></script>
+    <script src="../CDN/fullcalendar/index.global.min.js"></script>
     <!-- 引入外部 JS 文件 -->
     <script src="script.js"></script>
     <script>
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+        }
+
+        function getToken(){
+           const token = getCookie('token');
+            if (token) {
+                console.log('获取到的 token:', token);
+                return token;
+            } else {
+                console.log('未获取到 token');
+                alert("登录信息已过期，请重新登录");
+                window.location.href = '../index.html';
+            }
+        } 
+        
         // 修改登出跳转路径
         function logout() {
             window.location.href = '../index.html';
