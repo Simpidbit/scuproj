@@ -33,58 +33,19 @@ int main() {
     }
 
     // 测试添加第一条数据
-    std::vector<std::string> values1 = {"1", "张三", "1", "abcdef123456", "计算机科学"};
-    if (db.addOne(TableName::STUDENT, values1)) {
+    std::vector<std::string> values1 = {"1", "20246030", "password", "张三", "0"};
+    if (db.addOne(TableName::ACCOUNT, values1)) {
         std::cout << "First data added successfully." << std::endl;
     } else {
         std::cerr << "Failed to add first data: " << db.getErrorMsg() << std::endl;
     }
 
-    // 测试添加第二条数据
-    std::vector<std::string> values2 = {"2", "李四", "2", "qwertyuiop", "电子工程"};
-    if (db.addOne(TableName::STUDENT, values2)) {
-        std::cout << "Second data added successfully." << std::endl;
-    } else {
-        std::cerr << "Failed to add second data: " << db.getErrorMsg() << std::endl;
-    }
+    db.updateOneById(TableName::ACCOUNT, "ACCOUNT_NAME", "王五", "20246030");
 
-    // 测试搜索所有数据
-    auto allResults = db.searchALL(TableName::STUDENT, "NAME", "张三");
-    std::cout << "Search all results for Zhang San:" << std::endl;
-    printQueryResult(allResults);
+     db.deleteOneById(TableName::ACCOUNT,"20246030");
 
-    // 测试搜索单条数据
-    auto singleResult = db.searchOne(TableName::STUDENT, "NAME", "李四");
-    std::cout << "Search single result for Li Si:" << std::endl;
-    printSingleQueryResult(singleResult);
 
-    // 测试更新第一条数据
-    if (db.updateOneById(TableName::STUDENT, "PROFESSION", "软件工程", "1")) {
-        std::cout << "First data updated successfully." << std::endl;
-    } else {
-        std::cerr << "Failed to update first data: " << db.getErrorMsg() << std::endl;
-    }
-
-    // 测试更新第二条数据
-    if (db.updateOneById(TableName::STUDENT, "GENDER", "1", "2")) {
-        std::cout << "Second data updated successfully." << std::endl;
-    } else {
-        std::cerr << "Failed to update second data: " << db.getErrorMsg() << std::endl;
-    }
-
-    // 测试删除第一条数据
-    if (db.deleteOneById(TableName::STUDENT, "1")) {
-        std::cout << "First data deleted successfully." << std::endl;
-    } else {
-        std::cerr << "Failed to delete first data: " << db.getErrorMsg() << std::endl;
-    }
-
-    // 测试删除第二条数据
-    if (db.deleteOneById(TableName::STUDENT, "2")) {
-        std::cout << "Second data deleted successfully." << std::endl;
-    } else {
-        std::cerr << "Failed to delete second data: " << db.getErrorMsg() << std::endl;
-    }
+  
 
     return 0;
 }

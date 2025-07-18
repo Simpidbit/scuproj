@@ -19,7 +19,7 @@ int main(){
     std::cout << "open database successed" << std::endl;
 
     // 建 ACCOUNT 表
-    sql = "CREATE TABLE IF NOT EXISTS ACCOUNT("         \
+    sql =  "CREATE TABLE IF NOT EXISTS ACCOUNT("         \
             "ID INT PRIMARY KEY NOT NULL,"              \
             "ACCOUNT_ID         CHAR(8)     NOT NULL,"  \
             "ACCOUNT_PASSWD     CHAR(64)    NOT NULL,"  \
@@ -30,7 +30,7 @@ int main(){
     rc = sqlite3_exec(db, sql, NULL, NULL, &zErrMsg);
 
     if(rc != SQLITE_OK){
-        std::cerr << "create ACCOUNT table failed:" << zErrMsg << std::endl;
+        std::cerr << "create STUDENT table failed:" << zErrMsg << std::endl;
         sqlite3_free(zErrMsg); // 释放错误信息内存
         sqlite3_close(db);
         return -1;
@@ -61,7 +61,6 @@ int main(){
             "ID INT PRIMARY KEY NOT NULL,"            \
             "ACCOUNT_ID       CHAR(8)     NOT NULL,"  \
             "COURSE_ID_LIST   CHAR(1000)  NOT NULL);";
-
     // 执行 SQL 语句，没有 callback
     rc = sqlite3_exec(db, sql, NULL, NULL, &zErrMsg);
 
