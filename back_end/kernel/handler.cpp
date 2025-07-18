@@ -225,7 +225,11 @@ choose_course_request_handle(const std::unordered_map<std::string, void *> &data
         int spare = std::stoi(course[3]) - 1;
         db.updateOneById(TableName::COURSE, "COURSE_SPARE", std::to_string(spare), course_id);
         // 插入选课
-        std::vector<std::string> select_values = {account_id + "_" + course_id, account_id, course_id};
+        std::vector<std::string> select_values = {
+            account_id,
+            course_id
+        };
+        // 这里的 select_id 可以是 account_id + "_" + course_id 的形式
         if (db.addOne(TableName::COURSE_SELECT, select_values)) {
             *res = 0;
             ::tokens[account_id].second = get_timestamp();
@@ -296,8 +300,7 @@ remove_course_request_handle(const std::unordered_map<std::string, void *> &data
     }
     
     // 删除选课
-    std::string select_id = account_id + "_" + course_id;
-    if (db.deleteOneById(TableName::COURSE_SELECT, select_id)) {
+    if (db.deleteOneById(TableName::COURSE_SELECT, account_id)) {
         // spare+1
         std::vector<std::string> course = db.searchOne(TableName::COURSE, "COURSE_ID", course_id);
         if (!course.empty()) {
