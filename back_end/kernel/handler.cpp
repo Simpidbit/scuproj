@@ -313,4 +313,41 @@ remove_course_request_handle(const std::unordered_map<std::string, void *> &data
     return result;
 }
 
+
+std::unordered_map<std::string, void *>
+query_student_selection_request_handle(
+  const std::unordered_map<std::string, void *> &data)
+{
+  Database db;
+  std::unordered_map<std::string, void *> result;
+
+  std::string account_id  = *(std::string *)data.at("account_id");
+  std::string token       = *(std::string *)data.at("token");
+
+  delete (std::string *)data.at("account_id");
+  delete (std::string *)data.at("token");
+  
+  std::vector<std::string> user = db.searchOne(TableName::COURSE_SELECT, "ACCOUNT_ID", account_id);
+  unsigned char *res = new unsigned char;
+
+  if (user.empty())
+    *res = 1;
+  else if (check_token_correct(account_id, token) == 0)
+    *res = 100;
+  else if (check_token_correct(account_id, token) == 1)
+    *res = 100;
+  else if (check_token_correct(account_id, token) == 2)
+    *res = 101;
+  else {
+    *res = 0;
+    result["course_id_list_len"] = new unsigned char(static_cast<unsigned char>(user[1].size() / 10));
+    result["course_id_list"] = new std::string(user[1]);
+  }
+
+  result["result"] = res;
+  return result;
+}
+
+
+
 } // namespace handler

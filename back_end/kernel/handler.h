@@ -30,6 +30,10 @@ std::unordered_map<std::string, void *>
 remove_course_request_handle(
   const std::unordered_map<std::string, void *> &data);
 
+std::unordered_map<std::string, void *>
+query_student_selection_request_handle(
+  const std::unordered_map<std::string, void *> &data);
+
 } // namespace handler
 
 #endif // SCUPROJ_KERNEL_HANDLER_H

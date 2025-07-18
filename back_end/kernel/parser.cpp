@@ -228,6 +228,32 @@ remove_course_result_parse(
 }
 
 
+/**
+ * @brief 查询学生已选课程的请求.
+ */
+static void
+query_student_selection_request_parse(
+  std::unordered_map<std::string, void *> &data,
+  const std::vector<unsigned char> &raw)
+{
+  data["account_id"] = cut_to_string(raw, 1, 8);
+  data["token"] = cut_to_string(raw, 9, 72);
+}
+
+
+/**
+ * @brief 查询学生已选课程的结果.
+ */
+static void
+query_student_selection_result_parse(
+  std::unordered_map<std::string, void *> &data,
+  const std::vector<unsigned char> &raw)
+{
+  data["result"] = new unsigned char(raw[1]);
+  data["course_id_list_len"] = new unsigned char(raw[2]);
+  data["course_id_list"] = cut_to_string(raw, 3, raw.size() - 1);
+}
+
 namespace parser {
 
 // 主解析函数
@@ -276,6 +302,12 @@ parse(const std::vector<unsigned char> &raw)
       break;
     case 11:  // 退课结果
       remove_course_result_parse(data, raw);
+      break;
+    case 12:  // 查询学生已选课程的请求
+      query_student_selection_request_parse(data, raw);
+      break;
+    case 13:  // 查询学生已选课程的结果
+      query_student_selection_result_parse(data, raw);
       break;
   }
   return data;

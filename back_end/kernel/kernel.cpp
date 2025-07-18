@@ -2,6 +2,7 @@
 #include "kernel_config.h"
 #include "parser.h"
 #include "handler.h"
+#include "response.h"
 
 #include <iostream>
 
@@ -57,34 +58,42 @@ handle(SP::Client *cli)
   std::vector<unsigned char> raw = cli->brecvall();
   std::unordered_map<std::string, void *> data = parser::parse(raw);
   std::unordered_map<std::string, void *> result;
+  std::vector<unsigned char> resmsg;
   // data 由各逻辑完成判断后释放!
 
-  print_data(data); // TODO
+  print_data(data);
 
   switch(*static_cast<unsigned char *>(data["type"])) {
     case 0:   // 登录请求
       result = handler::login_request_handle(data);
+      resmsg = response::login_result(result);
       break;
     case 2:   // 修改密码请求
       result = handler::modify_password_request_handle(data);
+      resmsg = response::modify_password_result(result);
       break;
     case 4:   // 增加课程请求
       result = handler::add_course_request_handle(data);
+      resmsg = response::add_course_result(result);
       break;
     case 6:   // 选择课程请求
       result = handler::choose_course_request_handle(data);
+      resmsg = response::choose_course_result(result);
       break;
     case 8:   // 查询单个课程信息请求
       result = handler::query_course_request_handle(data);
+      resmsg = response::query_course_result(result);
       break;
     case 10:  // 退课请求
       result = handler::remove_course_request_handle(data);
+      resmsg = response::remove_course_result(result);
       break;
+    case 12:  // 查询学生已选课程的请求
+      result = handler::query_student_selection_request_handle(data);
+      resmsg = response::query_student_selection_result(result);
   }
 
-
-  /* TODO */
-
+  cli->send((const char *)(void *)&resmsg[0], resmsg.size());
 
   return;
 }

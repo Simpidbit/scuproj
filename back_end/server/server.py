@@ -190,14 +190,41 @@ def removeCourseRequest(data) -> str:
     print("###################")
     return json.dumps(result_dict)
 
+# 查询学生已选课程的请求 -> 查询学生已选课程的结果
+def queryStudentSelectionRequest(data) -> str:
+    print('=================== 查询学生已选课程的请求')
+    print(data)
+    print('-------------------')
+    msg = b'\x0c' \
+        + bytes(data['account_id'], encoding = 'utf-8') \
+        + bytes(data['token'], encoding = 'utf-8')
+
+    ks = connect_to_kernel()
+    ks.send(msg)
+    result = recvall(ks)
+    ks.close()
+
+    print("result:", result)
+
+    result_dict = {
+        "type": 13,
+        "result": result[1],
+        "course_id_list_len": result[2],
+        "course_id_list": result[3:].decode('utf-8')
+    }
+    print("result_dict:", result_dict)
+    print("###################")
+    return json.dumps(result_dict)
+
 
 handlerMap = [ \
-    loginRequest,               # 登录请求(0) -> 登录结果(1)
-    modifyPasswordRequest,      # 修改密码请求(2) -> 修改密码结果(3)
-    addCourseRequest,           # 增加课程请求(4) -> 增加课程结果(5)
-    chooseCourseRequest,        # 选择课程请求(6) -> 选择课程结果(7)
-    queryCourseRequest,         # 查询单个课程信息请求(8) -> 查询单个课程信息结果(9)
-    removeCourseRequest         # 退课请求(10) -> 退课结果(11)
+    loginRequest,                   # 登录请求(0) -> 登录结果(1)
+    modifyPasswordRequest,          # 修改密码请求(2) -> 修改密码结果(3)
+    addCourseRequest,               # 增加课程请求(4) -> 增加课程结果(5)
+    chooseCourseRequest,            # 选择课程请求(6) -> 选择课程结果(7)
+    queryCourseRequest,             # 查询单个课程信息请求(8) -> 查询单个课程信息结果(9)
+    removeCourseRequest,            # 退课请求(10) -> 退课结果(11)
+    queryStudentSelectionRequest    # 查询学生已选课程的请求(12) -> 查询学生已选课程的结果(13)
 ]
 
 @app.route('/request', methods = ['POST'])
