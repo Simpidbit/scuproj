@@ -52,7 +52,7 @@ check_token_timeout(std::string account_id)
 
 // 检查token是否存在且有效
 // 有效返回 3
-static long long
+static int
 check_token_correct(std::string account_id, std::string token)
 {
   if (!check_token(account_id)) return 0;// token 不存在
@@ -135,20 +135,18 @@ modify_password_request_handle(const std::unordered_map<std::string, void *> &da
     *res = 100; // token 不匹配
   } else if(check_token_correct(account_id, token)==2) {
     *res = 101; // token 已过期
-  }else {
+  } else {
     *res = 1;//其他错误
   }
 
   result["result"] = res;
   return result;
 }
-
 std::unordered_map<std::string, void *>
 add_course_request_handle(const std::unordered_map<std::string, void *> &data)
 {
     Database db;
     std::unordered_map<std::string, void *> result;
-
 
     std::vector<std::string> values = {
         *(std::string *)data.at("course_id"),
@@ -169,14 +167,13 @@ add_course_request_handle(const std::unordered_map<std::string, void *> &data)
     delete (std::vector<unsigned char> *)data.at("course_day");
 
     unsigned char *res = new unsigned char;
+      result["result"] = res;
 
     if (check_token_correct(values[0], token) == 1) {
         *res = 100; // token 错误
-        result["result"] = res;
         return result;
     } else if (check_token_correct(values[0], token) == 2) {
         *res = 101; // token 已过期
-        result["result"] = res;
         return result;
     }
 
@@ -195,9 +192,9 @@ std::unordered_map<std::string, void *>
 choose_course_request_handle(const std::unordered_map<std::string, void *> &data)
 {
     Database db;
-    std::string account_id = *(std::string *)data.at("account_id");
+    std::string account_id  = *(std::string *)data.at("account_id");
     std::string token       = *(std::string *)data.at("token");
-    std::string course_id = *(std::string *)data.at("course_id");
+    std::string course_id   = *(std::string *)data.at("course_id");
 
     delete (std::string *)data.at("account_id");
     delete (std::string *)data.at("token");
@@ -205,41 +202,50 @@ choose_course_request_handle(const std::unordered_map<std::string, void *> &data
 
     std::unordered_map<std::string, void *> result;
     unsigned char *res = new unsigned char;
-    
+    result["result"] = res;
 
-    if(check_token_correct(account_id, token) == 1) {
+    int token_stat = check_token_correct(account_id, token);
+    if (token_stat == 0 || token_stat == 1) {
         *res = 100; // token 错误
-        result["result"] = res;
         return result;
     }
-    else if(check_token_correct(account_id, token) == 2) {
+    else if (token_stat == 2) {
         *res = 101; // token 已过期
-        result["result"] = res;
         return result;
     }
 
     // 先查 spare
     std::vector<std::string> course = db.searchOne(TableName::COURSE, "COURSE_ID", course_id);
     if (!course.empty() && std::stoi(course[3]) > 0) {
-        // 更新 spare
-        int spare = std::stoi(course[3]) - 1;
-        db.updateOneById(TableName::COURSE, "COURSE_SPARE", std::to_string(spare), course_id);
-        // 插入选课
-        std::vector<std::string> select_values = {
-            account_id,
-            course_id
-        };
-        // 这里的 select_id 可以是 account_id + "_" + course_id 的形式
-        if (db.addOne(TableName::COURSE_SELECT, select_values)) {
-            *res = 0;
-            ::tokens[account_id].second = get_timestamp();
-        } else {
-            *res = 2; // 添加选课失败
+      // 更新 spare
+      int spare = std::stoi(course[3]) - 1;
+      db.updateOneById(TableName::COURSE, "COURSE_SPARE", std::to_string(spare), course_id);
+
+      std::vector<std::string> student_selection = db.searchOne(TableName::COURSE_SELECT, "ACCOUNT_ID", account_id);
+
+      std::string course_id_list = student_selection[1];
+      unsigned char course_id_list_len = static_cast<unsigned char>(course_id_list.size() / 10);
+
+      // 检查学生是否已经选择此课程
+      bool has_chosen = false;
+      for (unsigned char i = 0; i != course_id_list_len; i++) {
+        if (course_id == course_id_list.substr(i * 10, 10)) {
+          has_chosen = true;  // 已选择
+          break;
         }
-    } else {
-        *res = 1;// 课程已满
-    }
-    result["result"] = res;
+      }
+
+      if (has_chosen) {
+        // 已选择
+        *res = 1;
+      } else {
+        // 未选择，更新上去
+        *res = 0;
+        std::string new_course_id_list = course_id_list + course_id;
+        db.updateOneById(TableName::COURSE_SELECT, "COURSE_ID_LIST", new_course_id_list, account_id);
+      }
+    } else *res = 1;// 其他错误
+
     return result;
 }
 
@@ -250,21 +256,17 @@ query_course_request_handle(const std::unordered_map<std::string, void *> &data)
     std::string course_id = *(std::string *)data.at("course_id");
     delete (std::string *)data.at("course_id");
 
-
     std::unordered_map<std::string, void *> result;
     std::vector<std::string> course = db.searchOne(TableName::COURSE, "COURSE_ID", course_id);
     unsigned char *res = new unsigned char;
     if (!course.empty()) {
-        *res = 0;  // 查询成功
-        result["course_id"] = new std::string(course[0]);
-        result["course_name_len"] = new unsigned char(std::stoi(course[1]));
-        result["course_name"] = new std::string(course[2]);
-        result["course_capacity"] = new unsigned int(std::stoi(course[3]));
-        result["course_spare"] = new unsigned int(std::stoi(course[4]));
-        result["course_week"] = new std::vector<unsigned char>(course[5].begin(), course[5].end());
-        result["course_day"] = new std::vector<unsigned char>(course[6].begin(), course[6].end());
-    } else {
-        *res = 1;  // 查询失败
+      result["course_id"] = new std::string(course[0]);
+      result["course_name_len"] = new unsigned char(std::stoi(course[1]));
+      result["course_name"] = new std::string(course[2]);
+      result["course_capacity"] = new unsigned int(std::stoi(course[3]));
+      result["course_spare"] = new unsigned int(std::stoi(course[4]));
+      result["course_week"] = new std::vector<unsigned char>(course[5].begin(), course[5].end());
+      result["course_day"] = new std::vector<unsigned char>(course[6].begin(), course[6].end());
     }
     result["result"] = res;//按照原有表格，查询失败没有返回值
     return result;

@@ -8,9 +8,14 @@ login_result(std::unordered_map<std::string, void *> &result)
 {
   std::vector<unsigned char> resmsg;
   resmsg.resize(66);
+
   resmsg[0] = *(unsigned char *)result["type"];
   resmsg[1] = *(unsigned char *)result["result"];
   memcpy(&resmsg[2], static_cast<std::string *>(result["token"])->c_str(), 64);
+
+  delete (unsigned char *)result["type"];
+  delete (unsigned char *)result["result"];
+  delete (std::string *)result["token"];
 
   return resmsg;
 }
@@ -24,6 +29,9 @@ modify_password_result(std::unordered_map<std::string, void *> &result)
   resmsg[0] = *(unsigned char *)result["type"];
   resmsg[1] = *(unsigned char *)result["result"];
 
+  delete (unsigned char *)result["type"];
+  delete (unsigned char *)result["result"];
+
   return resmsg;
 }
 
@@ -33,8 +41,12 @@ add_course_result(std::unordered_map<std::string, void *> &result)
   std::vector<unsigned char> resmsg;
 
   resmsg.resize(2);
+
   resmsg[0] = *(unsigned char *)result["type"];
   resmsg[1] = *(unsigned char *)result["result"];
+
+  delete (unsigned char *)result["type"];
+  delete (unsigned char *)result["result"];
 
   return resmsg;
 }
@@ -46,8 +58,12 @@ choose_course_result(std::unordered_map<std::string, void *> &result)
   std::vector<unsigned char> resmsg;
 
   resmsg.resize(2);
+
   resmsg[0] = *(unsigned char *)result["type"];
   resmsg[1] = *(unsigned char *)result["result"];
+
+  delete (unsigned char *)result["type"];
+  delete (unsigned char *)result["result"];
 
   return resmsg;
 }
@@ -72,6 +88,18 @@ query_course_result(std::unordered_map<std::string, void *> &result)
   memcpy(&resmsg[12 + N + 4], &(*(std::vector<unsigned char> *)result["course_week"])[0], w);
   memcpy(&resmsg[12 + N + 4 + w], &(*(std::vector<unsigned char> *)result["course_day"])[0], d);
 
+  delete (unsigned char *)result["course_name_len"];
+  delete (std::vector<unsigned char> *)result["course_week"];
+  delete (std::vector<unsigned char> *)result["course_day"];
+  delete (unsigned char *)result["type"];
+  delete (std::string *)result["course_id"];
+  delete (unsigned char *)result["course_name_len"];
+  delete (std::string *)result["course_name"];
+  delete (unsigned int *)result["course_capacity"];
+  delete (unsigned int *)result["course_spare"];
+  delete (std::vector<unsigned char> *)result["course_week"];
+  delete (std::vector<unsigned char> *)result["course_day"];
+
   return resmsg;
 }
 
@@ -83,6 +111,9 @@ remove_course_result(std::unordered_map<std::string, void *> &result)
   resmsg.resize(2);
   resmsg[0] = *(unsigned char *)result["type"];
   resmsg[1] = *(unsigned char *)result["result"];
+
+  delete (unsigned char *)result["type"];
+  delete (unsigned char *)result["result"];
 
   return resmsg;
 }
@@ -101,6 +132,11 @@ query_student_selection_result(std::unordered_map<std::string, void *> &result)
   resmsg[2] = *(unsigned char *)result["course_id_list_len"];
 
   memcpy(&resmsg[3], ((std::string *)result["course_id_list"])->c_str(), course_id_list_len * 10);
+
+  delete (unsigned char *)result["type"];
+  delete (unsigned char *)result["result"];
+  delete (unsigned char *)result["course_id_list_len"];
+  delete (std::string *)result["course_id_list"];
 
   return resmsg;
 }
