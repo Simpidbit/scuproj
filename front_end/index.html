@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>选课管理系统 - 登录</title>
+    <!-- 引入外部 CSS 文件 -->
+    <link rel="stylesheet" href="style.css">
+     <!-- 设置 favicon，假设图标文件名为 favicon.ico -->
+    <link rel="icon" href="./favicon.ico" type="image/x-icon">
+</head>
+</head>
+<body>
+    <div class="login-container">
+        <h2>四川大学选课管理系统登录</h2>
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="username">用户名</label>
+                <input type="text" id="username" name="username" placeholder="请输入用户名">
+            </div>
+            <div class="form-group">
+                <label for="password">密码</label>
+                <input type="password" id="password" name="password" placeholder="请输入密码">
+            </div>
+            <!-- 滑动开关 -->
+            <div class="form-group">
+                <label class="switch">
+                    <input type="checkbox" id="adminLogin" name="adminLogin">
+                    <span class="slider round"></span>
+                </label>
+                <span class="switch-label">以管理员权限登录</span>
+            </div>
+            <button type="submit">登录</button>
+        </form>
+    </div>
+    <!-- 引入外部 JS 文件 -->
+    <script src="script.js"></script>
+</body>
+</html>

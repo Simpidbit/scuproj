@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>学生管理系统 - 管理员界面</title>
+    <!-- 引入 Font Awesome 图标库 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- 引入外部 CSS 文件 -->
+    <link rel="stylesheet" href="style.css">
+    <!-- 设置 favicon，假设图标文件名为 favicon.ico -->
+    <link rel="icon" href="../favicon.ico" type="image/x-icon">
+    <style>
+        /* 分页控件样式 */
+        #coursePagination {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        #coursePagination button {
+            margin: 0 5px;
+            padding: 5px 10px;
+            cursor: pointer;
+            background-color: #fff; /* 白色背景 */
+            border: 1px solid #9a9a9a; /* 川大灰边框 */
+            border-radius: 3px;
+            color: #8C1515; /* 低饱和深红文字 */
+        }
+
+        #coursePagination button:hover {
+            background-color: #e8dcc5; /* 浅米白背景，与编辑按钮悬停色一致 */
+        }
+
+        #coursePagination button.active {
+            background-color: #8C1515; /* 低饱和深红背景 */
+            color: white; /* 白色文字 */
+            border-color: #8C1515; /* 低饱和深红边框 */
+        }
+
+        #coursePagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
+        <a href="#" onclick="showStudentManagement()">
+            <i class="fas fa-user-graduate"></i> <span>学生管理</span>
+        </a>
+        <a href="#" onclick="showCourseManagement()">
+            <i class="fas fa-book"></i> <span>课程管理</span>
+        </a>
+        <!-- 修改为退出登录，点击跳转到登录页面 -->
+        <a href="../index.html">
+            <i class="fas fa-sign-out-alt"></i> <span>退出登录</span>
+        </a>
+        <!-- 添加 logo 图片 -->
+        <img src="../pic/logo/logo_text_red.jpg" alt="Logo" class="sidebar-logo">
+    </div>
+    <!-- 主内容区域 -->
+    <div class="main-content">
+        <h1 id="pageTitle">学生管理系统</h1>
+        <!-- 学生管理表格 -->
+        <table id="studentTable">
+            <thead>
+                <tr>
+                    <th>学号</th>
+                    <th>姓名</th>
+                    <th>权限</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody id="studentList"></tbody>
+        </table>
+        <!-- 学生分页控件 -->
+        <div id="studentPagination" class="pagination"></div>
+
+        <!-- 课程管理表格 -->
+        <table id="courseTable" style="display: none;">
+            <thead>
+                <tr>
+                    <th>课程号</th>
+                    <th>课程名</th>
+                    <th>课容量</th>
+                    <th>课余量</th>
+                    <th>课程周</th>
+                    <th>课程节次</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody id="courseList"></tbody>
+        </table>
+        <!-- 课程分页控件 -->
+        <div id="coursePagination" class="pagination"></div>
+
+        <!-- 添加学生按钮 -->
+        <button id="addStudentBtn" class="add-student-btn" onclick="showModal()">+</button>
+        <!-- 添加课程按钮 -->
+        <button id="addCourseBtn" class="add-student-btn" onclick="showCourseModal()" style="display: none;">+</button>
+    </div>
+    <!-- 学生信息弹窗 -->
+    <div id="myModal" class="modal">
+        <div class="modal-content">
+            <h2 id="modalTitle">添加学生</h2>
+            <input type="text" id="modalStudentId" placeholder="学号" disabled>
+            <input type="text" id="modalStudentName" placeholder="姓名">
+            <select id="modalStudentRole">
+                <option value="学生">学生</option>
+                <option value="管理员">管理员</option>
+            </select>
+            <!-- 移除密码输入框 -->
+            <button class="modal-save-btn" onclick="saveStudent()">保存</button>
+            <button class="modal-cancel-btn" onclick="closeModal()">取消</button>
+        </div>
+    </div>
+
+    <!-- 课程信息弹窗 -->
+    <div id="courseModal" class="modal">
+        <div class="modal-content">
+            <h2 id="courseModalTitle">添加课程</h2>
+            <input type="text" id="modalCourseId" placeholder="课程号，10 位纯数字" disabled>
+            <input type="text" id="modalCourseName" placeholder="课程名，限 255 字节内">
+            <input type="number" id="modalCourseCapacity" placeholder="课容量">
+            <input type="number" id="modalCourseSpare" placeholder="课余量">
+            <input type="text" id="modalCourseWeek" placeholder="课程周，如 2 1 16 3 12">
+            <input type="text" id="modalCourseDay" placeholder="课程节次，如 1 2 3 4">
+            <button class="modal-save-btn" onclick="saveCourse()">保存</button>
+            <button class="modal-cancel-btn" onclick="closeCourseModal()">取消</button>
+        </div>
+    </div>
+
+    <!-- 删除确认弹窗 -->
+    <div id="deleteModal" class="delete-modal">
+        <div class="delete-modal-content">
+            <p>确定要删除该信息吗？</p>
+            <button class="delete-confirm-btn" onclick="confirmDelete()">确认删除</button>
+            <button class="delete-cancel-btn" onclick="closeDeleteModal()">取消</button>
+        </div>
+    </div>
+
+    <!-- 引入外部 JavaScript 文件 -->
+    <script src="script.js"></script>
+</body>
+</html>

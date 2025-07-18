@@ -1,0 +1,138 @@
+[
+    {
+        "course_id": "0000000001",
+        "course_name": "JavaScript 编程",
+        "course_capacity": 50,
+        "course_spare": 20,
+        "course_week": [2, 1, 16, 3, 12],
+        "course_day": [1, 2, 3, 4, 4, 5, 7]
+    },
+    {
+        "course_id": "0000000002",
+        "course_name": "数据库原理",
+        "course_capacity": 40,
+        "course_spare": 15,
+        "course_week": [1, 2, 15],
+        "course_day": [1, 4, 5, 6]
+    },
+    {
+        "course_id": "0000000003",
+        "course_name": "Python 数据分析",
+        "course_capacity": 60,
+        "course_spare": 30,
+        "course_week": [2, 3, 18, 5, 15],
+        "course_day": [2, 3, 5, 6, 7, 8,10]
+    },
+    {
+        "course_id": "0000000004",
+        "course_name": "计算机网络",
+        "course_capacity": 55,
+        "course_spare": 25,
+        "course_week": [3, 2, 17, 4, 14, 6, 16],
+        "course_day": [3, 2, 4, 5, 6, 7, 8, 7, 1, 2]
+    },
+    {
+        "course_id": "0000000005",
+        "course_name": "数据结构",
+        "course_capacity": 45,
+        "course_spare": 20,
+        "course_week": [2, 4, 16, 7, 13],
+        "course_day": [2, 4, 6, 6, 7, 8,12]
+    },
+    {
+        "course_id": "0000000006",
+        "course_name": "中华文化(艺术篇)",
+        "course_capacity": 300,
+        "course_spare": 100,
+        "course_week": [1, 2, 9],
+        "course_day": [1, 3, 8, 10]
+    },
+    {
+        "course_id": "0000000007",
+        "course_name": "中华文化(文学篇)",
+        "course_capacity": 200,
+        "course_spare": 10,
+        "course_week": [1, 2, 17],
+        "course_day": [1, 3, 8, 10]
+    },
+    {
+        "course_id": "0000000008",
+        "course_name": "改革开放史",
+        "course_capacity": 150,
+        "course_spare": 0,
+        "course_week": [1, 1, 16],
+        "course_day": [1, 5, 8, 10]
+    },
+    {
+        "course_id": "0000000009",
+        "course_name": "中共党史",
+        "course_capacity": 150,
+        "course_spare": 23,
+        "course_week": [1, 1, 16],
+        "course_day": [1, 5, 8, 10]
+    },
+    {
+        "course_id": "0000000010",
+        "course_name": "军事理论",
+        "course_capacity": 180,
+        "course_spare": 3,
+        "course_week": [1, 1, 17],
+        "course_day": [1, 4, 5, 7]
+    },
+    {
+        "course_id": "0000000011",
+        "course_name": "UNIX操作系统",
+        "course_capacity": 50,
+        "course_spare": 47,
+        "course_week": [1, 1, 17],
+        "course_day": [1, 4, 5, 7]
+    },
+    {
+        "course_id": "0000000012",
+        "course_name": "数据结构与算法",
+        "course_capacity": 55,
+        "course_spare": 33,
+        "course_week": [1, 1, 17],
+        "course_day": [1, 4, 5, 7]
+    },
+    {
+        "course_id": "0000000013",
+        "course_name": "Java 编程",
+        "course_capacity": 80,
+        "course_spare": 17,
+        "course_week": [1, 1, 17],
+        "course_day": [1, 4, 5, 7]
+    },
+    {
+        "course_id": "0000000014",
+        "course_name": "C++ 编程",
+        "course_capacity": 80,
+        "course_spare": 7,
+        "course_week": [1, 1, 17],
+        "course_day": [1, 3, 5, 7,5, 1, 2]
+    },
+    {
+        "course_id": "0000000015",
+        "course_name": "C语言程序设计",
+        "course_capacity": 80,
+        "course_spare": 50,
+        "course_week": [1, 1, 17],
+        "course_day": [1, 1, 5, 9]
+    },
+    {
+        "course_id": "0000000016",
+        "course_name": "人工智能引论",
+        "course_capacity": 30,
+        "course_spare": 0,
+        "course_week": [1, 1, 17],
+        "course_day": [1, 2, 1, 2]
+    },
+    {
+        "course_id": "0000000017",
+        "course_name": "计算机导论",
+        "course_capacity": 20,
+        "course_spare": 0,
+        "course_week": [1, 1, 17],
+        "course_day": [1, 4, 1, 2]
+    }
+]
