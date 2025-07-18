@@ -261,11 +261,15 @@ async function searchCourses() {
 
     const result = await makeRequest(courseData);
 
-    if (result.result === 0) {
-        alert(`添加成功`);
+    console.log(result);
+    if (result.result != 0) {
+           displayResults([]);  
+    }else{
+         displayResults([result]);
     }
+        
 
-    displayResults([result]);
+   
 }
 
 // 动态添加 CSS 样式
