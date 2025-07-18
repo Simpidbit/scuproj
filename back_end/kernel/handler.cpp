@@ -127,12 +127,12 @@ modify_password_request_handle(const std::unordered_map<std::string, void *> &da
   unsigned char *res = new unsigned char;
   if (!user.empty() && check_token_correct(account_id, token)) {
     if (db.updateOneById(TableName::ACCOUNT, "ACCOUNT_PASSWD", new_passwd, account_id)) {
-      *res = 1; // 修改成功
+      *res = 0; // 修改成功
       ::tokens[account_id].second = get_timestamp();
     }
     else
-      *res = 0; // 数据库更新失败
-  } else *res = 0; // token 错误
+      *res = 1; // 数据库更新失败
+  } else *res = 1; // token 错误
 
   result["result"] = res;
   return result;
@@ -142,20 +142,34 @@ std::unordered_map<std::string, void *>
 add_course_request_handle(const std::unordered_map<std::string, void *> &data)
 {
     Database db;
+    std::unordered_map<std::string, void *> result;
+
+
     std::vector<std::string> values = {
-        *(std::string *)data.at("counse_id"),
+        *(std::string *)data.at("course_id"),
         *(std::string *)data.at("course_name"),
         std::to_string(*(unsigned int *)data.at("course_capacity")),
         std::to_string(*(unsigned int *)data.at("course_spare")),
         *(std::string *)data.at("course_week"),
         *(std::string *)data.at("course_day")
     };
-    std::unordered_map<std::string, void *> result;
+
+    delete (std::string *)data.at("course_id");
+    delete (std::string *)data.at("course_name");
+    delete (unsigned int *)data.at("course_capacity");
+    delete (unsigned int *)data.at("course_spare");
+    delete (std::string *)data.at("course_week");
+    delete (std::string *)data.at("course_day");
+
     unsigned char *res = new unsigned char;
     if (db.addOne(TableName::COURSE, values)) {
-        *res = 1;
-    } else {
         *res = 0;
+    } else if (db.getErrorMsg() && std::string(db.getErrorMsg()).find("UNIQUE constraint failed") != std::string::npos) {
+        // 如果不是课程冲突，返回错误码 2
+        *res = 2;
+    } else {
+        // 说明课程冲突
+        *res = 1;
     }
     result["result"] = res;
     return result;
@@ -165,27 +179,41 @@ std::unordered_map<std::string, void *>
 choose_course_request_handle(const std::unordered_map<std::string, void *> &data)
 {
     Database db;
-    auto student_id = *(std::string *)data.at("account_id");
-    auto course_id = *(std::string *)data.at("course_id");
+    std::string account_id = *(std::string *)data.at("account_id");
+    std::string token       = *(std::string *)data.at("token");
+    std::string course_id = *(std::string *)data.at("course_id");
+
+    delete (std::string *)data.at("account_id");
+    delete (std::string *)data.at("token");
+    delete (std::string *)data.at("course_id");
+
     std::unordered_map<std::string, void *> result;
     unsigned char *res = new unsigned char;
-    // 这里假设 COURSE_SELECT 只存一条选课记录，实际可根据表结构调整
-    std::vector<std::string> values = {student_id, course_id};
+    
+
+    std::vector<std::string> values = {account_id, course_id};
+    if (!check_token_correct(account_id, token)) {
+        *res = 1; // token 错误
+        result["result"] = res;
+        return result;
+    }
+
     // 先查 spare
-    auto course = db.searchOne(TableName::COURSE, "COURSE_ID", course_id);
+    std::vector<std::string> course = db.searchOne(TableName::COURSE, "COURSE_ID", course_id);
     if (!course.empty() && std::stoi(course[3]) > 0) {
         // 更新 spare
         int spare = std::stoi(course[3]) - 1;
         db.updateOneById(TableName::COURSE, "COURSE_SPARE", std::to_string(spare), course_id);
         // 插入选课
-        std::vector<std::string> select_values = {student_id + "_" + course_id, student_id, course_id};
+        std::vector<std::string> select_values = {account_id + "_" + course_id, account_id, course_id};
         if (db.addOne(TableName::COURSE_SELECT, select_values)) {
-            *res = 1;
-        } else {
             *res = 0;
+            ::tokens[account_id].second = get_timestamp();
+        } else {
+            *res = 3; // 添加选课失败
         }
     } else {
-        *res = 0;
+        *res = 2;// 课程已满
     }
     result["result"] = res;
     return result;
@@ -195,21 +223,26 @@ std::unordered_map<std::string, void *>
 query_course_request_handle(const std::unordered_map<std::string, void *> &data)
 {
     Database db;
-    auto course_id = *(std::string *)data.at("course_id");
+    std::string course_id = *(std::string *)data.at("course_id");
+    delete (std::string *)data.at("course_id");
+
+
     std::unordered_map<std::string, void *> result;
-    auto course = db.searchOne(TableName::COURSE, "COURSE_ID", course_id);
+    std::vector<std::string> course = db.searchOne(TableName::COURSE, "COURSE_ID", course_id);
     unsigned char *res = new unsigned char;
     if (!course.empty()) {
-        *res = 1;
-        result["course_name"] = new std::string(course[1]);
-        result["course_capacity"] = new unsigned int(std::stoi(course[2]));
-        result["course_spare"] = new unsigned int(std::stoi(course[3]));
-        result["course_week"] = new std::string(course[4]);
-        result["course_day"] = new std::string(course[5]);
+        *res = 0;  // 查询成功
+        result["course_id"] = new std::string(course[0]);
+        result["course_name_len"] = new unsigned char(std::stoi(course[1]));
+        result["course_name"] = new std::string(course[2]);
+        result["course_capacity"] = new unsigned int(std::stoi(course[3]));
+        result["course_spare"] = new unsigned int(std::stoi(course[4]));
+        result["course_week"] = new std::string(course[5]);
+        result["course_day"] = new std::string(course[6]);
     } else {
-        *res = 0;
+        *res = 1;  // 查询失败
     }
-    result["result"] = res;
+    result["result"] = res;//按照原有表格，查询失败没有返回值
     return result;
 }
 
@@ -217,22 +250,37 @@ std::unordered_map<std::string, void *>
 remove_course_request_handle(const std::unordered_map<std::string, void *> &data)
 {
     Database db;
-    auto student_id = *(std::string *)data.at("account_id");
-    auto course_id = *(std::string *)data.at("course_id");
+    std::string account_id = *(std::string *)data.at("account_id");
+    std::string token = *(std::string *)data.at("token");
+    std::string course_id = *(std::string *)data.at("course_id");
+    delete (std::string *)data.at("account_id");
+    delete (std::string *)data.at("token");
+    delete (std::string *)data.at("course_id");
+
+    if (!check_token_correct(account_id, token)) {
+        std::unordered_map<std::string, void *> result;
+        unsigned char *res = new unsigned char(1); // token 错误，删除选课失败
+        result["result"] = res;
+        return result;
+    }
+
+
+
     std::unordered_map<std::string, void *> result;
     unsigned char *res = new unsigned char;
     // 删除选课
-    std::string select_id = student_id + "_" + course_id;
+    std::string select_id = account_id + "_" + course_id;
     if (db.deleteOneById(TableName::COURSE_SELECT, select_id)) {
         // spare+1
-        auto course = db.searchOne(TableName::COURSE, "COURSE_ID", course_id);
+        std::vector<std::string> course = db.searchOne(TableName::COURSE, "COURSE_ID", course_id);
         if (!course.empty()) {
             int spare = std::stoi(course[3]) + 1;
             db.updateOneById(TableName::COURSE, "COURSE_SPARE", std::to_string(spare), course_id);
         }
-        *res = 1;
-    } else {
         *res = 0;
+        ::tokens[account_id].second = get_timestamp();
+    } else {
+        *res = 1; // 删除选课失败
     }
     result["result"] = res;
     return result;
