@@ -199,8 +199,14 @@ class Database{
             }
             // 转换枚举为字符串
             std::string tableName = tableNameToString(table);
-            //1.预构建
-            std::string sql = "delete from "+ tableName + " where ACCOUNT_ID = ?";
+             //1.预构建
+            std::string sql;
+            if(table==TableName::COURSE){
+                sql = "delete from "+ tableName + " where COURSE_ID = ?";
+            }else{
+                sql = "delete from "+ tableName + " where ACCOUNT_ID = ?";
+            }
+           
             // 调用私有预处理函数
             auto result = executeSQL(sql, {id}, false);
             if (!result.first) {
@@ -231,7 +237,13 @@ class Database{
             //1.预构建
             // 注释内容与实际操作不符，更新为正确的注释
             // 构建 SQL 语句：UPDATE table SET field = ? WHERE id = ?
-            std::string sql = "update "+ tableName + " set "+ field + " = ? where ACCOUNT_ID = ?";
+            std::string sql;
+            if(table==TableName::COURSE){
+                 sql = "update "+ tableName + " set "+ field + " = ? where COURSE_ID = ?";
+            }else{
+                sql = "update "+ tableName + " set "+ field + " = ? where ACCOUNT_ID = ?";
+            }
+           
             // 调用私有预处理函数
             auto result = executeSQL(sql, {value, id}, false);
             if (!result.first) {
