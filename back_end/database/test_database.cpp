@@ -33,7 +33,7 @@ int main() {
     }
 
     // 测试添加第一条数据
-    std::vector<std::string> values1 = {"1", "20246030", "password", "张三", "0"};
+    std::vector<std::string> values1 = {"20246031", "password", "张三", "0"};
     if (db.addOne(TableName::ACCOUNT, values1)) {
         std::cout << "First data added successfully." << std::endl;
     } else {
@@ -41,8 +41,6 @@ int main() {
     }
 
     db.updateOneById(TableName::ACCOUNT, "ACCOUNT_NAME", "王五", "20246030");
-
-     db.deleteOneById(TableName::ACCOUNT,"20246030");
 
 
   
