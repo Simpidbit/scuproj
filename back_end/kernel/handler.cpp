@@ -155,8 +155,8 @@ add_course_request_handle(const std::unordered_map<std::string, void *> &data)
         *(std::string *)data.at("course_name"),
         std::to_string(*(unsigned int *)data.at("course_capacity")),
         std::to_string(*(unsigned int *)data.at("course_spare")),
-        *(std::string *)data.at("course_week"),
-        *(std::string *)data.at("course_day")
+        std::string((char *)((std::vector<unsigned char> *)data.at("course_week"))->data(), ((std::vector<unsigned char> *)data.at("course_week"))->size()),
+        std::string((char *)((std::vector<unsigned char> *)data.at("course_day"))->data(), ((std::vector<unsigned char> *)data.at("course_day"))->size())
     };
     std::string token = *(std::string *)data.at("token");
 
@@ -165,31 +165,27 @@ add_course_request_handle(const std::unordered_map<std::string, void *> &data)
     delete (std::string *)data.at("course_name");
     delete (unsigned int *)data.at("course_capacity");
     delete (unsigned int *)data.at("course_spare");
-    delete (std::string *)data.at("course_week");
-    delete (std::string *)data.at("course_day");
+    delete (std::vector<unsigned char> *)data.at("course_week");
+    delete (std::vector<unsigned char> *)data.at("course_day");
 
     unsigned char *res = new unsigned char;
 
-    if(check_token_correct(values[0], token) == 1) {
+    if (check_token_correct(values[0], token) == 1) {
         *res = 100; // token 错误
         result["result"] = res;
         return result;
-    }
-    else if(check_token_correct(values[0], token) == 2) {
+    } else if (check_token_correct(values[0], token) == 2) {
         *res = 101; // token 已过期
         result["result"] = res;
         return result;
     }
 
-   
     if (db.addOne(TableName::COURSE, values)) {
         *res = 0;
     } else if (db.getErrorMsg() && std::string(db.getErrorMsg()).find("UNIQUE constraint failed") != std::string::npos) {
-        // 如果不是课程冲突，返回错误码 2
-        *res = 2;
+        *res = 2; // 如果不是课程冲突，返回错误码 2
     } else {
-        // 说明课程冲突
-        *res = 1;
+        *res = 1; // 说明课程冲突
     }
     result["result"] = res;
     return result;
@@ -261,8 +257,8 @@ query_course_request_handle(const std::unordered_map<std::string, void *> &data)
         result["course_name"] = new std::string(course[2]);
         result["course_capacity"] = new unsigned int(std::stoi(course[3]));
         result["course_spare"] = new unsigned int(std::stoi(course[4]));
-        result["course_week"] = new std::string(course[5]);
-        result["course_day"] = new std::string(course[6]);
+        result["course_week"] = new std::vector<unsigned char>(course[5].begin(), course[5].end());
+        result["course_day"] = new std::vector<unsigned char>(course[6].begin(), course[6].end());
     } else {
         *res = 1;  // 查询失败
     }
