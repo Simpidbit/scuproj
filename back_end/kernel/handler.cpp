@@ -52,12 +52,13 @@ check_token_timeout(std::string account_id)
 
 // 检查token是否存在且有效
 // 有效返回 true
-static bool
+static long long
 check_token_correct(std::string account_id, std::string token)
 {
-  if (!check_token(account_id)) return false;
-  return (::tokens[account_id].first == token
-       && !check_token_timeout(account_id));
+  if (!check_token(account_id)) return 0;// token 不存在
+  else if (::tokens[account_id].first != token) return 1;// token 不匹配
+  else if(!check_token_timeout(account_id)) return 2;// token 已过期
+  else return 3; // token 有效  
 }
 
 
@@ -125,14 +126,18 @@ modify_password_request_handle(const std::unordered_map<std::string, void *> &da
 
   std::vector<std::string> user = db.searchOne(TableName::ACCOUNT, "ACCOUNT_ID", account_id);
   unsigned char *res = new unsigned char;
-  if (!user.empty() && check_token_correct(account_id, token)) {
+  if (!user.empty() && check_token_correct(account_id, token)==3) {
     if (db.updateOneById(TableName::ACCOUNT, "ACCOUNT_PASSWD", new_passwd, account_id)) {
       *res = 0; // 修改成功
       ::tokens[account_id].second = get_timestamp();
     }
-    else
-      *res = 1; // 数据库更新失败
-  } else *res = 1; // token 错误
+  } else if(check_token_correct(account_id, token)==1) {
+    *res = 100; // token 不匹配
+  } else if(check_token_correct(account_id, token)==2) {
+    *res = 101; // token 已过期
+  }else {
+    *res = 1;//其他错误
+  }
 
   result["result"] = res;
   return result;
@@ -153,8 +158,10 @@ add_course_request_handle(const std::unordered_map<std::string, void *> &data)
         *(std::string *)data.at("course_week"),
         *(std::string *)data.at("course_day")
     };
+    std::string token = *(std::string *)data.at("token");
 
     delete (std::string *)data.at("course_id");
+    delete (std::string *)data.at("token");
     delete (std::string *)data.at("course_name");
     delete (unsigned int *)data.at("course_capacity");
     delete (unsigned int *)data.at("course_spare");
@@ -162,6 +169,19 @@ add_course_request_handle(const std::unordered_map<std::string, void *> &data)
     delete (std::string *)data.at("course_day");
 
     unsigned char *res = new unsigned char;
+
+    if(check_token_correct(values[0], token) == 1) {
+        *res = 100; // token 错误
+        result["result"] = res;
+        return result;
+    }
+    else if(check_token_correct(values[0], token) == 2) {
+        *res = 101; // token 已过期
+        result["result"] = res;
+        return result;
+    }
+
+   
     if (db.addOne(TableName::COURSE, values)) {
         *res = 0;
     } else if (db.getErrorMsg() && std::string(db.getErrorMsg()).find("UNIQUE constraint failed") != std::string::npos) {
@@ -191,9 +211,13 @@ choose_course_request_handle(const std::unordered_map<std::string, void *> &data
     unsigned char *res = new unsigned char;
     
 
-    std::vector<std::string> values = {account_id, course_id};
-    if (!check_token_correct(account_id, token)) {
-        *res = 1; // token 错误
+    if(check_token_correct(account_id, token) == 1) {
+        *res = 100; // token 错误
+        result["result"] = res;
+        return result;
+    }
+    else if(check_token_correct(account_id, token) == 2) {
+        *res = 101; // token 已过期
         result["result"] = res;
         return result;
     }
@@ -210,10 +234,10 @@ choose_course_request_handle(const std::unordered_map<std::string, void *> &data
             *res = 0;
             ::tokens[account_id].second = get_timestamp();
         } else {
-            *res = 3; // 添加选课失败
+            *res = 2; // 添加选课失败
         }
     } else {
-        *res = 2;// 课程已满
+        *res = 1;// 课程已满
     }
     result["result"] = res;
     return result;
@@ -257,17 +281,24 @@ remove_course_request_handle(const std::unordered_map<std::string, void *> &data
     delete (std::string *)data.at("token");
     delete (std::string *)data.at("course_id");
 
-    if (!check_token_correct(account_id, token)) {
-        std::unordered_map<std::string, void *> result;
-        unsigned char *res = new unsigned char(1); // token 错误，删除选课失败
-        result["result"] = res;
-        return result;
-    }
+    
 
 
 
     std::unordered_map<std::string, void *> result;
     unsigned char *res = new unsigned char;
+
+    if(check_token_correct(account_id, token) == 1) {
+        *res = 100; // token 错误
+        result["result"] = res;
+        return result;
+    }
+    else if(check_token_correct(account_id, token) == 2) {
+        *res = 101; // token 已过期
+        result["result"] = res;
+        return result;
+    }
+    
     // 删除选课
     std::string select_id = account_id + "_" + course_id;
     if (db.deleteOneById(TableName::COURSE_SELECT, select_id)) {
