@@ -145,7 +145,7 @@ async function makeRequest(data) {
     const requestJson = JSON.stringify(data, null, 2);
     console.log(requestJson);
 
-    const response = await fetch('http://localhost:3000/request', {
+    const response = await fetch('http://118.89.112.170:8989/request', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -437,9 +437,22 @@ document.addEventListener('DOMContentLoaded', async function() {
 });
 
 function getCookie(name) {
-            const value = `; ${document.cookie}`;
-            const parts = value.split(`; ${name}=`);
-            if (parts.length === 2) return parts.pop().split(';').shift();
+            const value =  `${document.cookie}`;
+            //const parts = value.split(`; ${name}=`);
+            //if (parts.length === 2) return parts.pop().split(';').shift();
+
+            let result = '';
+            for (let i = 0; i < value.length; i++) {
+                if (value.substr(i, name.length) == name) {
+                    for (let j = i + name.length + 1; j < value.length; j++) {
+                        result += value[j];
+                    }
+                }
+            }
+
+            console.log(`getCookie: cookie = ${document.cookie}. result = ${result}.`)
+
+            return result;
         }
 
 function getToken(){
@@ -462,6 +475,6 @@ function getID(){
     } else {
         console.log('未获取到 id');
         alert("登录信息已过期，请重新登录");
-        window.location.href = '../index.html';
+        //window.location.href = '../index.html';
     }
 } 

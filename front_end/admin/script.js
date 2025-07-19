@@ -596,7 +596,7 @@ async function makeRequest(data) {
     const requestJson = JSON.stringify(data, null, 2);
     console.log(requestJson);
 
-    const response = await fetch('http://localhost:3000/request', {
+    const response = await fetch('http://118.89.112.170:8989/request', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'

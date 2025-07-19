@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // 构建包含所需信息的对象
             const loginInfo = {
                 type:0,
-                account_level: isAdmin ?'1':'0',
+                account_level: isAdmin ?1:0,
                 account_id: username,
                 account_pwd: encryptedPassword
             };
@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log(loginInfoJSON);
 
                 // 发送POST请求到后端
-            const response = await fetch('http://localhost:3000/request', {
+            const response = await fetch('http://118.89.112.170:8989/request', {
                 method: 'POST', // 请求方法为POST
                 headers: {
                     'Content-Type': 'application/json', // 声明发送JSON格式数据
@@ -64,6 +64,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         document.cookie = `account_id=${username};max - age=900; path=/;`;
                         window.location.href = 'admin/index.html';
                     }else{
+                        document.cookie = `token=${result.token};max - age=900; path=/;`;
+                        document.cookie = `account_id=${username};max - age=900; path=/;`;
                         window.location.href = 'student/index.html';
                     }
                     
