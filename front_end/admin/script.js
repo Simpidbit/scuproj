@@ -423,24 +423,24 @@ async function saveCourse() {
     }
     const courseDay = [courseDayInput.length / 3, ...courseDayInput];
 
-    const courseData = {
-        type: 4,
-        accountId: getID(),
-        token: getToken(),
-        course_id: courseId,
-        course_name_len: courseName.length,
-        course_name: courseName,
-        course_capacity: courseCapacity,
-        course_spare: courseSpare,
-        course_week: courseWeek,
-        course_day: courseDay
-    };
+    // const courseData = {
+    //     type: 4,
+    //     accountId: getID(),
+    //     token: getToken(),
+    //     course_id: courseId,
+    //     course_name_len: courseName.length,
+    //     course_name: courseName,
+    //     course_capacity: courseCapacity,
+    //     course_spare: courseSpare,
+    //     course_week: courseWeek,
+    //     course_day: courseDay
+    // };
 
-    const result = await makeRequest(courseData);
+    // const result = await makeRequest(courseData);
 
-    if (result.result === 0) {
-        alert(`添加成功`);
-    }
+    // if (result.result === 0) {
+    //     alert(`添加成功`);
+    // }
 
     renderCourses();
     closeCourseModal();

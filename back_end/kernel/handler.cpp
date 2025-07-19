@@ -586,6 +586,10 @@ query_student_selection_request_handle(
   std::string account_id  = *(std::string *)data.at("account_id");
   std::string token       = *(std::string *)data.at("token");
 
+  std::cout << "token = " << token << std::endl;
+  std::cout << "account_id" << account_id << std::endl;
+  std::cout << "correct token = " << ::tokens[account_id].first << std::endl;
+
   delete (std::string *)data.at("account_id");
   delete (std::string *)data.at("token");
   

@@ -145,7 +145,7 @@ async function makeRequest(data) {
     const requestJson = JSON.stringify(data, null, 2);
     console.log(requestJson);
 
-    const response = await fetch('http://118.89.112.170:8989/request', {
+    const response = await fetch('http://localhost:8989/request', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -196,7 +196,7 @@ async function dropCourse(courseId) {
 
             const selectinfo = {
                 type: 10,
-                accountId: getID(),
+                account_id: getID(),
                 token: getToken(),
                 course_id: courseId
             };
@@ -236,7 +236,7 @@ async function selectCourse(courseId) {
     console.log('选课成功');
     const selectinfo = {
         type: 6,
-        accountId: getID(),
+        account_id: getID(),
         token: getToken(),
         course_id: courseId
     };
@@ -395,16 +395,56 @@ let enrolledCourses = [];
 // 异步获取并处理已选课程数据
 async function fetchEnrolledCourses() {
     try {
-        // 读取本地JSON文件，假设这里用 selected_info.json 获取已选课程数据
-        const response = await fetch('./selected_info.json');
+
+        const selected_info = {
+            type:12,
+            account_id:getID(),
+            token:getToken()
+        }
+
+        const selected_info_json = JSON.stringify(selected_info, null, 2);
+        console.log(selected_info_json);
+
+        const result = await makeRequest(selected_info);
+        console.log(result);
+        const courses = result.course_id_list;
+
+        // 每10个元素分割成一个子数组
+        const chunkedCourses = [];
+        const chunkSize = 10;
+
+        for (let i = 0; i < courses.length; i += chunkSize) {
+            // 从当前索引开始，截取最多10个元素
+            const chunk = courses.slice(i, i + chunkSize);
+            chunkedCourses.push(chunk);
+        }
+
+        console.log(chunkedCourses);
+
+        // 使用 Promise.all 等待所有请求完成
+        const course_info = await Promise.all(chunkedCourses.map(async data => {
+            const courseData = {
+                type: 8,
+                accountId: getID(),
+                token: getToken(),
+                course_id: data
+            };
+
+            return await makeRequest(courseData);
+        }));
+
+        console.log(course_info);
+
+        // // 读取本地JSON文件，假设这里用 selected_info.json 获取已选课程数据
+        // const response = await fetch('./selected_info.json');
         
-        if (!response.ok) throw new Error(`请求失败: ${response.status}`);
+        // if (!response.ok) throw new Error(`请求失败: ${response.status}`);
         
-        const mockCourses = await response.json();
-        console.log("本地JSON数据:", mockCourses);
+        // const mockCourses = await response.json();
+        // console.log("本地JSON数据:", mockCourses);
         
-        // 假设不需要过滤，直接将获取的数据赋值给 enrolledCourses
-        enrolledCourses = mockCourses;
+        // // 假设不需要过滤，直接将获取的数据赋值给 enrolledCourses
+        enrolledCourses = course_info;
         
         // 渲染已选课程列表
         displayEnrolledCourses();

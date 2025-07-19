@@ -1,13 +1,15 @@
 from flask import Flask
 from flask import request
-
+from flask_cors import CORS  # 引入 CORS 类
 import json
 import socket
 
-SERVER_PORT = 22334
+SERVER_PORT = 8989
 KERNEL_PORT = 24354
 
 app = Flask(__name__)
+# 允许所有域名跨域，设置允许的请求方法和请求头
+CORS(app, methods=['GET', 'POST', 'OPTIONS'], headers=['Content-Type'])
 
 def connect_to_kernel():
     s = socket.socket()
@@ -215,14 +217,17 @@ def queryStudentSelectionRequest(data) -> str:
     result = recvall(ks)
     ks.close()
 
-    print("result:", result)
-
     result_dict = {
         "type": 13,
-        "result": result[1],
-        "course_id_list_len": result[2],
-        "course_id_list": result[3:].decode('utf-8')
+        "result": result[1]
     }
+
+    print("result:", result)
+
+    if result[1] == 0:
+        result_dict["course_id_list_len"] = result[2]
+        result_dict["course_id_list"] = result[3:].decode('utf-8')
+
     print("result_dict:", result_dict)
     print("###################")
     return json.dumps(result_dict)

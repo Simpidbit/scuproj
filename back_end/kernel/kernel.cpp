@@ -112,6 +112,8 @@ handle(SP::Client *cli)
 
 int main()
 {
+  std::cout << "test" << std::endl;
+  pit(9999);
   SP::Server serv;
   SP::Client *cli;
 
