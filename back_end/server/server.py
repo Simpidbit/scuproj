@@ -40,7 +40,6 @@ def loginRequest(data) -> str:
     ks.send(msg)
     result = recvall(ks)
     ks.close()
-    return 'yes'
 
     print("result:", result)
 
@@ -150,16 +149,28 @@ def queryCourseRequest(data) -> str:
 
     print("result:", result)
 
-    N = result[11]
-    w = result[12 + N + 4]
+    if result[1] != 0:
+        result_dict = {
+            "type": result[0],
+            "result": result[1]
+        }
+        print("result_dict:", result_dict)
+        print("###################")
+        return json.dumps(result_dict)
+
+
+    N = result[12]
+    w = result[13 + N + 4]
     result_dict = {
-        "course_id": result[1:11].decode('utf-8'),
+        "type": result[0],
+        "result": result[1],
+        "course_id": result[2:12].decode('utf-8'),
         "course_name_len": N,
-        "course_name": result[12 : 12 + N],
-        "course_capacity": int.from_bytes(result[12 + N : 12 + N + 2], byteorder = 'little'),
-        "course_spare": int.from_bytes(result[12 + N + 2 : 12 + N + 4], byteorder = 'little'),
-        "course_week": [i for i in result[(12 + N + 4) : (12 + N + 4) + w]],
-        "course_day": [i for i in result[(12 + N + 4) + w:]]
+        "course_name": result[13 : 13 + N].decode('utf-8'),
+        "course_capacity": int.from_bytes(result[13 + N : 13 + N + 2], byteorder = 'little'),
+        "course_spare": int.from_bytes(result[13 + N + 2 : 13 + N + 4], byteorder = 'little'),
+        "course_week": [i for i in result[(13 + N + 4) : (13 + N + 4) + w]],
+        "course_day": [i for i in result[(13 + N + 4) + w:]]
     }
     print("result_dict:", result_dict)
     print("###################")
